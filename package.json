@@ -1,6 +1,6 @@
 {
   "name": "dsh-gemini-parameter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pass official Gemini API parameters (safetySettings, X-Server-Timeout, serviceTier, cachedContent, generationConfig...) through DSH's native Google route, with a config panel on the plugin's detail page. 为 DSH 的 Gemini 请求透传官方参数，插件详情页内提供配置面板。",
   "keywords": [
     "dsh",
@@ -45,7 +45,7 @@
     }
   },
   "scripts": {
-    "test": "node --test test/mock-fetch.test.mjs test/config-file.test.mjs test/panel-core.test.mjs test/client-smoke.test.mjs"
+    "test": "node --test test/mock-fetch.test.mjs test/config-file.test.mjs test/panel-core.test.mjs test/relay-compat.test.mjs test/client-smoke.test.mjs"
   },
   "license": "MIT",
   "author": "FatBadger217",

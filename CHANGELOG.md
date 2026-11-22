@@ -12,6 +12,52 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - From `1.0` on, strict semver applies: breaking changes only ship in major
   versions.
 
+## [Unreleased]
+
+## [0.1.1] - 2026-11-22
+
+### Added
+
+- `relayUnwrap` configuration (default off): coexistence with in-host model proxies
+  such as billion-context, which hand requests down the fetch chain with the URL
+  rewritten to `<loopback>/bili/<original-url>`. With a prefix configured (e.g.
+  `["/bili/"]`), the whitelist match falls back to the embedded original URL and
+  injection works behind the proxy.
+- Relay detection: requests rewritten with a `/bili/` marker are counted in a new
+  `relaySpotted` statistic while the compat is off, and the config panel shows a
+  warning card explaining how to enable it (see upstream analysis
+  [ranxianglei/billion-context#7527](https://github.com/ranxianglei/billion-context/issues/7527)).
+- The overview card ("currently effective settings") now shows `relayUnwrap`: the
+  active prefixes, a plain-language purpose note, and known-target annotations
+  (`/bili/` → billion-context).
+- 概览卡（「当前生效配置」）新增 `relayUnwrap` 行：显示已启用前缀、用途说明，
+  以及已知前缀的目标插件标注（`/bili/` → billion-context）。
+- README (both languages) and the usage manual now document the general recipe for
+  coexisting with URL-rewriting plugins — spot the symptom, find the prefix,
+  enable, verify — with billion-context as the worked example.
+- README（双语）与使用说明补充「与会改写请求网址的插件共存」的通用配置方法
+  （发现症状 → 找到前缀 → 开启 → 验证），并以 billion-context 为完整实例。
+
+### Fixed
+
+- The config panel could not save `relayUnwrap` (T6 of the 0.1.0 acceptance
+  run): the `emitConfigBlock` serializer omitted the key, so the read-back
+  verification always saw an empty list and correctly aborted the write with
+  `[WRITE_UNSAFE] … [VERIFY_FAILED]`. The key is now emitted after `endpoints`
+  (empty/default values stay unemitted, keeping default configs clean), and
+  round-trip tests cover both empty and non-empty values.
+- 配置面板无法保存 `relayUnwrap`（0.1.0 真机验收 T6 项）：
+  `emitConfigBlock` 序列化器漏掉该键，回读校验只能得到空列表，防写坏管线按设计
+  以 `[WRITE_UNSAFE] … [VERIFY_FAILED]` 中止写入。现于 `endpoints` 之后补输出该键
+  （空值/缺省时不输出，保持默认配置干净），并补充空/非空两种
+  写入→回读→再序列化一致性单测。
+- The panel version badge was stuck at `v0.1.0`: the host side hardcoded its own
+  version constant. The version is now derived from `package.json` (single source
+  of truth; the client-side fallback literal synced), so future bumps cannot be
+  forgotten again.
+- 面板版本徽章停留在 `v0.1.0`：宿主侧版本号是独立硬编码常量。现改为从
+  `package.json` 派生（单一事实来源；客户端兜底常量同步更新），此后升版不会再漏改。
+
 ## [0.1.0] - 2026-11-22
 
 ### Added

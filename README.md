@@ -62,6 +62,7 @@ Keys inside the `config` block of the package's `cordis.patch.yml`:
 |---|---|---|
 | `hosts` | `["generativelanguage.googleapis.com"]` | Hostnames to match; exact domains, optional `*.` wildcard (matches the domain itself or any subdomain) |
 | `endpoints` | `[":generateContent", ":streamGenerateContent"]` | URL path suffix match, each entry starts with `:`; `countTokens`, `files`, etc. are never touched |
+| `relayUnwrap` | `[]` (off) | Relay compat prefixes: when a proxy such as billion-context rewrites model requests to `<loopback>/bili/<original-url>`, add `["/bili/"]` to match the embedded original URL and keep injecting (see below) |
 | `safetySettings` | 4 categories at `BLOCK_NONE` | Array of `{category, threshold}` or an object map; `false` disables the whole group |
 | `serverTimeoutSeconds` | `1200` | `X-Server-Timeout` value, integer 1..1200; `0`/`null`/`false` = don't send the header |
 | `officialParams` | `{}` | Whitelisted official fields: top-level `generationConfig` / `serviceTier` / `cachedContent` / `labels` / `toolConfig`; 19 sub-keys inside `generationConfig` (`maxOutputTokens`, `thinkingConfig`, `mediaResolution`, `responseModalities`, …) |
@@ -93,13 +94,48 @@ officialParams:
 
 The full field manual — data types, enums, injection/merge rules, common errors and upstream 400 signatures — is [`docs/使用说明.md`](docs/使用说明.md) §3 (in Chinese; English translation welcome via PR).
 
+### Coexistence with URL-rewriting plugins (`relayUnwrap`)
+
+Some in-host plugins (compression proxies, gateways, …) rewrite model requests to
+`<loopback>/<prefix>/<original-url>` before handing them down the fetch chain. The
+original hostname is then no longer in the host position, so plain `hosts` matching
+silently stops injecting. `relayUnwrap` restores matching: for each configured path
+prefix, the plugin unwraps the embedded original URL and matches against it.
+
+General recipe for any such plugin:
+
+1. **Spot it** — while the compat is off, the panel counts relay-rewritten requests
+   and shows a warning card; the "matched" counters stay at 0 although the model
+   itself works fine.
+2. **Find the prefix** — check the rewriting plugin's docs or logs for the URL shape
+   it produces, and take the path prefix it inserts (for billion-context: `/bili/`).
+3. **Enable** — panel → *Edit config* → *Network matching* → add that prefix as a
+   `relayUnwrap` row, then save and restart `dsh web` (hand-editing the YAML below is
+   equivalent):
+
+   ```yaml
+   relayUnwrap:
+     - /bili/
+   ```
+
+4. **Verify** — after the restart the warning card disappears and the request
+   counters resume. The overview card lists the active prefixes and annotates known
+   ones (`/bili/` → billion-context).
+
+Worked example — [billion-context](https://github.com/ranxianglei/billion-context):
+it rewrites requests to `<loopback>/bili/<original-url>`
+(upstream discussion [billion-context#7527](https://github.com/ranxianglei/billion-context/issues/7527)),
+so the prefix to add is `/bili/`. Note that this URL shape is currently an internal
+convention of billion-context, not a documented contract — if a future release
+changes it, the prefix may need updating.
+
 ### The config panel
 
 Open **settings → Plugins → `dsh-gemini-parameter`**; the config section below the description shows what is currently in effect and edits it as a form.
 
 ![DSH Gemini parameter panel overview: live config summary and file path](docs/screenshots/config-panel-overview.png)
 
-*Read-only overview: an "applied" status badge and version, the configuration file location, the currently effective settings (hosts, endpoint suffixes, safety thresholds, timeout), and per-session request counters.*
+*Read-only overview: an "applied" status badge and version, the configuration file location, the currently effective settings (hosts, endpoint suffixes, `relayUnwrap` prefixes with known-target annotations such as `/bili/` → billion-context, safety thresholds, timeout), and per-session request counters.*
 
 ![Config editor: hosts, safety thresholds, and request behavior](docs/screenshots/parameter-editor.png)
 

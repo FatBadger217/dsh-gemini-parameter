@@ -53,6 +53,7 @@ dsh plugin --profile <名称> add github:FatBadger217/dsh-gemini-parameter
 |---|---|---|
 | `hosts` | `["generativelanguage.googleapis.com"]` | 命中主机名；每项为精确域名，支持 `*.` 前缀通配（匹配去通配后的域名本身或任意子域名） |
 | `endpoints` | `[":generateContent", ":streamGenerateContent"]` | URL path 后缀匹配，每项以 `:` 开头；`countTokens`、`files` 等默认不会被动 |
+| `relayUnwrap` | `[]`（关闭） | 代理兼容前缀：billion-context 等把请求改写为 `<本地代理>/bili/<原始网址>` 时，填 `["/bili/"]` 解出原始网址继续注入（见下文专节） |
 | `safetySettings` | 四类 `BLOCK_NONE` | 数组 `{category, threshold}` 或对象映射；`false` 表示**整组关闭**（只透传其它参数） |
 | `serverTimeoutSeconds` | `1200` | `X-Server-Timeout` 值，1..1200 整数；`0`/`null`/`false` 均为不发送该头 |
 | `officialParams` | `{}` | 官方字段白名单：顶层 `generationConfig` / `serviceTier` / `cachedContent` / `labels` / `toolConfig`；`generationConfig` 内 19 个子键（`maxOutputTokens`、`thinkingConfig`、`mediaResolution`、`responseModalities`…） |
@@ -62,6 +63,28 @@ dsh plugin --profile <名称> add github:FatBadger217/dsh-gemini-parameter
 | `onUnsupportedBody` | `skip` | 请求体不是可解析 JSON 时：`skip` 放行，`error` 抛错（排查用） |
 
 各字段的完整语义（数据类型、枚举、注入/合并规则、常见错误与上游 400 特征）见 [`docs/使用说明.md` §3 字段手册](docs/使用说明.md)。
+
+### 与会改写请求网址的插件共存（relayUnwrap）
+
+部分宿主内插件（压缩代理、网关等）会把模型请求改写成 `<本地代理>/<前缀>/<原始网址>` 再交给 fetch 链。此时原始主机名已不在主机位上，按 `hosts` 匹配会**静默失效**。`relayUnwrap` 的作用是恢复匹配：对每个已配置的路径前缀，插件会解出内嵌的原始网址并按它匹配。
+
+对任何这类插件的通用配置方法：
+
+1. **发现症状** —— 兼容未开启时，面板统计会出现"代理改写（未兼容）"计数并显示警告卡片；模型本身正常，但"匹配请求"等计数一直是 0。
+2. **找到前缀** —— 查看改写型插件的文档或日志，确认它把网址改写成了什么形状，取出它插入的路径前缀（billion-context 是 `/bili/`）。
+3. **开启兼容** —— 面板「编辑配置 → 网络匹配」给 `relayUnwrap` 添加该前缀一行，保存后重启 `dsh web`（手改 YAML 等价）：
+
+   ```yaml
+   relayUnwrap:
+     - /bili/
+   ```
+
+4. **验证生效** —— 重启后警告卡片消失、请求计数恢复。概览卡会列出已启用的前缀，并对已知前缀标注对应插件（`/bili/` → billion-context）。
+
+完整实例 —— [billion-context](https://github.com/ranxianglei/billion-context)：
+它把请求改写为 `<本地代理>/bili/<原始网址>`
+（上游讨论 [billion-context#7527](https://github.com/ranxianglei/billion-context/issues/7527)），
+因此要添加的前缀是 `/bili/`。注意这一 URL 形状目前是 billion-context 的**内部约定**而非公开契约，上游改版时前缀可能需要跟着更新。
 
 三组独立示例：
 
@@ -94,7 +117,7 @@ officialParams:
 
 ```powershell
 # 1) 单元测试（本地 mock fetch，不联网；在仓库根执行）
-npm test        # 37 项用例应全部通过
+npm test        # 44 项用例应全部通过
 
 # 2) 注入证据：临时开启 debugDumpTo（或 log: true），重启后发一次原生 google 请求，
 #    JSONL 文件里应出现 injected=true 与实际注入内容（不记录 prompt）——详见 docs/使用说明.md §2

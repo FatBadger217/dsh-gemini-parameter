@@ -10,12 +10,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  cloneJson,
   deepEqual,
   emitConfigBlock,
   locateConfigBlock,
   readPluginConfig,
   writePluginConfig
 } from '../lib/config-file.js';
+import { normalizeConfig } from '../lib/index.js';
 
 /** 与随包发布的手写 cordis.patch.yml 同构的样本（含块内整行注释）。 */
 const HAND_WRITTEN = `# dsh-gemini-parameter bundle patch.
@@ -153,6 +155,52 @@ test('写入后回读等于写入值（默认配置与复杂 officialParams）',
     await writePluginConfig(file, complex, { backupDir });
     const again = await readPluginConfig(file);
     assert.deepEqual(again.config, complex);
+  }
+  finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('relayUnwrap 回读一致性（T6 回归）：写入→回读→再序列化稳定等价（空/非空）', async () => {
+  const { dir, file, backupDir } = await tempWorkspace();
+  // 复刻 panel-core saveConfig 的双重保险 verdict：回读解析 → normalizeConfig →
+  // deepEqual 待写归一化值。旧序列化器缺 relayUnwrap 键时这里会 VERIFY_FAILED（T6）。
+  const panelVerify = (pending) => {
+    const normalized = normalizeConfig(cloneJson(pending));
+    return (parsed) => {
+      let again;
+      try {
+        again = normalizeConfig(cloneJson(parsed));
+      }
+      catch (error) {
+        return { ok: false, message: String(error?.message ?? error) };
+      }
+      const ok = deepEqual(again, normalized);
+      return { ok, value: again, message: ok ? undefined : '回读结果与待写配置不一致' };
+    };
+  };
+  try {
+    // ① 非空（面板保存 /bili/ 的 T6 场景）：带校验写入成功，键被规范输出。
+    const withRelay = { ...DEFAULTS, relayUnwrap: ['/bili/'] };
+    const written = await writePluginConfig(file, withRelay, { backupDir, verify: panelVerify(withRelay) });
+    assert.deepEqual(written.applied.relayUnwrap, ['/bili/']);
+    const text1 = await readFile(file, 'utf8');
+    assert.match(text1, /relayUnwrap:/);
+    assert.match(text1, /- "\/bili\/"/);
+    // 再序列化稳定：用回读结果原样再写一次，文本与解析值都等价。
+    const read1 = await readPluginConfig(file);
+    await writePluginConfig(file, read1.config, { backupDir, verify: panelVerify(read1.config) });
+    assert.equal(await readFile(file, 'utf8'), text1);
+    assert.deepEqual((await readPluginConfig(file)).config, read1.config);
+    // ② 空/缺省：不输出 relayUnwrap 键（默认配置不被污染），同样幂等。
+    const withoutRelay = { ...DEFAULTS, relayUnwrap: [] };
+    await writePluginConfig(file, withoutRelay, { backupDir, verify: panelVerify(withoutRelay) });
+    const text2 = await readFile(file, 'utf8');
+    assert.doesNotMatch(text2, /relayUnwrap/);
+    const read2 = await readPluginConfig(file);
+    assert.equal('relayUnwrap' in read2.config, false);
+    await writePluginConfig(file, read2.config, { backupDir, verify: panelVerify(read2.config) });
+    assert.equal(await readFile(file, 'utf8'), text2);
   }
   finally {
     await rm(dir, { recursive: true, force: true });
