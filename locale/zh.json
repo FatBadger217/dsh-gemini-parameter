@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Gemini 官方参数透传",
+    "description": "为 DSH 原生 Google 路由的 Gemini 请求透传官方参数：安全阈值、X-Server-Timeout、serviceTier、cachedContent、长解码预算等，按需开启。"
+  }
+}

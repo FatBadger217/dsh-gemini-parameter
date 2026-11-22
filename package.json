@@ -1,0 +1,61 @@
+{
+  "name": "dsh-gemini-parameter",
+  "version": "0.1.0",
+  "description": "Pass official Gemini API parameters (safetySettings, X-Server-Timeout, serviceTier, cachedContent, generationConfig...) through DSH's native Google route, with a config panel on the plugin's detail page. 为 DSH 的 Gemini 请求透传官方参数，插件详情页内提供配置面板。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "gemini",
+    "safetySettings",
+    "generationConfig",
+    "parameter-passthrough"
+  ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.1 <0.3.0-0"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "README.zh-CN.md",
+    "CHANGELOG.md",
+    "screenshots.json",
+    "docs"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node --test test/mock-fetch.test.mjs test/config-file.test.mjs test/panel-core.test.mjs test/client-smoke.test.mjs"
+  },
+  "license": "MIT",
+  "author": "FatBadger217",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FatBadger217/dsh-gemini-parameter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FatBadger217/dsh-gemini-parameter/issues"
+  },
+  "homepage": "https://github.com/FatBadger217/dsh-gemini-parameter#readme",
+  "private": true
+}

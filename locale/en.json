@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Gemini official parameter passthrough",
+    "description": "Passes official Gemini request fields through DSH's native Google route: safety thresholds, X-Server-Timeout, serviceTier, cachedContent, long-decode budget, and more — opt-in per group."
+  }
+}

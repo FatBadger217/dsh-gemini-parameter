@@ -1,0 +1,53 @@
+# dsh-gemini-parameter bundle patch.
+# `dsh plugin --profile <name> add github:FatBadger217/dsh-gemini-parameter`
+# (or plugin_manager install_bundle on this directory) appends this package to
+# dsh.profile.bundles and applies this layer, so the plugin mounts without any
+# manual cordis.patch.yml editing. New packages need a DSH restart.
+- insert:
+    - id: gemini-parameter
+      name: dsh-gemini-parameter
+      config:
+        # Exact hostnames (a leading "*." wildcard is allowed). Only requests to
+        # these hosts are touched; everything else passes through untouched.
+        hosts:
+          - generativelanguage.googleapis.com
+        # Path suffixes that carry an injectable JSON body.
+        endpoints:
+          - ":generateContent"
+          - ":streamGenerateContent"
+        # merge       = keep categories the SDK already sent, fill in/override ours
+        # replace     = the list below replaces whatever the SDK sent
+        # insert-only = only add when the request carries no safetySettings at all
+        mode: merge
+        safetySettings:
+          - category: HARM_CATEGORY_HARASSMENT
+            threshold: BLOCK_NONE
+          - category: HARM_CATEGORY_HATE_SPEECH
+            threshold: BLOCK_NONE
+          - category: HARM_CATEGORY_SEXUALLY_EXPLICIT
+            threshold: BLOCK_NONE
+          - category: HARM_CATEGORY_DANGEROUS_CONTENT
+            threshold: BLOCK_NONE
+        # 只想透传其它官方参数、不需要低安全阈值时，改成：
+        # safetySettings: false
+        # Sent as `X-Server-Timeout: <seconds>`. 1..1200; null (or 0) disables.
+        serverTimeoutSeconds: 1200
+        # 额外的 Google 官方 GenerateContentRequest 字段（白名单校验，默认不注入）。
+        # 只写你确实需要的键；未知键会在挂载时直接报错，避免拼写错误被静默发出去。
+        # 可用顶层键：generationConfig / serviceTier / cachedContent / labels / toolConfig
+        # generationConfig 内支持：temperature, topP, topK, candidateCount,
+        #   maxOutputTokens, stopSequences, responseMimeType, responseSchema,
+        #   responseJsonSchema, responseModalities, mediaResolution, seed,
+        #   thinkingConfig, responseLogprobs, logprobs, presencePenalty,
+        #   frequencyPenalty, enableEnhancedCivicAnswers, speechConfig
+        # 例：只解锁 >64K 长解码，不碰安全阈值与其它字段：
+        # officialParams:
+        #   generationConfig:
+        #     maxOutputTokens: 131072
+        officialParams: {}
+        # Write one line per touched request to this file. Debug only: it records
+        # the injected safetySettings / officialParams, the timeout header and the
+        # URL (not prompts).
+        debugDumpTo: null
+        # false keeps the host log quiet; true logs one line per injected request.
+        log: false
