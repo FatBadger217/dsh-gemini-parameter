@@ -14,6 +14,16 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Publish readiness: removed the `private: true` guard from `package.json`
+  (npm release prep, no functional change) and added a GitHub Actions workflow
+  (`.github/workflows/publish.yml`) that publishes to npm automatically when a
+  release is published.
+- 发布准备：摘除 `package.json` 中的 `private: true` 保险丝（无功能变化），新增
+  GitHub Actions 自动发布工作流（`.github/workflows/publish.yml`，随 Release
+  自动发布 npm）。
+
 ## [0.1.1] - 2026-11-22
 
 ### Added
