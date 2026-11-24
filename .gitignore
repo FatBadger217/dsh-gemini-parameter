@@ -2,4 +2,4 @@ node_modules/
 .config-backups/
 *.log
 Thumbs.db
-Desktop.ini
+Desktop.inipackage-lock.json
