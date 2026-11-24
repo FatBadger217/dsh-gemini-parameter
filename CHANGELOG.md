@@ -24,6 +24,18 @@ project adheres to [Semantic Versioning](https://semver.org/).
   GitHub Actions 自动发布工作流（`.github/workflows/publish.yml`，随 Release
   自动发布 npm）。
 
+### Documentation
+
+- 0.1.1 is live on npm (published 2026-11-24): installation instructions across
+  both READMEs, the usage manual, the maintainer notes and the bundle patch
+  comment now lead with `dsh plugin ... add dsh-gemini-parameter` (npm) and
+  keep the GitHub source install as the alternative; npm version/downloads
+  badges added to both READMEs.
+- 0.1.1 已上架 npm（2026-11-24 发布）：双语 README、使用说明、维护文档与补丁
+  注释中的安装命令均改为以 npm 安装为主（`dsh plugin ... add
+  dsh-gemini-parameter`）、GitHub 源码安装保留为备选；双语 README 顶部新增
+  npm 版本与下载量徽章。
+
 ## [0.1.1] - 2026-11-22
 
 ### Added

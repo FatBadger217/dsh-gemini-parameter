@@ -2,6 +2,8 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
+[![npm](https://img.shields.io/npm/v/dsh-gemini-parameter.svg)](https://www.npmjs.com/package/dsh-gemini-parameter) [![downloads](https://img.shields.io/npm/dm/dsh-gemini-parameter.svg?label=downloads)](https://www.npmjs.com/package/dsh-gemini-parameter)
+
 A host plugin for DSH (DeepSeek Harness) that adds the **official Gemini API parameter passthrough missing from DSH's native `google` route**. On demand, it attaches officially supported request fields to every Gemini request (streaming included): `safetySettings`, `X-Server-Timeout`, and a whitelist of `serviceTier` / `cachedContent` / `maxOutputTokens` (long-decode budget) / `mediaResolution` and more.
 
 DSH's native Google adapter (pi-ai + `@google/genai`) only populates a small subset of the fields the official API accepts, and most official parameters have no setting entry. This plugin wraps `globalThis.fetch` inside the host process and applies a strict whitelist passthrough **only** to JSON requests against `:generateContent` / `:streamGenerateContent` on `generativelanguage.googleapis.com`. All other traffic passes through untouched, and nothing in the DSH / pi-ai / `@google/genai` installations is modified.
@@ -39,6 +41,10 @@ DSH's native Google adapter (pi-ai + `@google/genai`) only populates a small sub
 ## 3. Installation, config location, upgrades
 
 ```powershell
+# recommended: the npm release (on npmjs.com since 0.1.1)
+dsh plugin --profile web add dsh-gemini-parameter
+
+# alternative: install from the GitHub source
 dsh plugin --profile web add github:FatBadger217/dsh-gemini-parameter
 ```
 
@@ -49,9 +55,9 @@ Restart `dsh web` after installing. The package lands in `~/.dsh/profiles/<profi
 **Upgrade note**: upgrading or reinstalling replaces the package directory (pnpm virtual store), so manual edits inside `cordis.patch.yml` and the `.config-backups\` history are lost in the process. Copy your config out before upgrading (the panel's file-reveal button opens the folder for you), then re-apply it afterwards.
 
 ```powershell
-# upgrade
+# upgrade (re-add from npm, or from GitHub the same way)
 dsh plugin --profile web remove dsh-gemini-parameter
-dsh plugin --profile web add github:FatBadger217/dsh-gemini-parameter
+dsh plugin --profile web add dsh-gemini-parameter
 ```
 
 ## 4. Configuration

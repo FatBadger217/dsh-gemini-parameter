@@ -2,6 +2,8 @@
 
 [English](README.md) | 简体中文
 
+[![npm](https://img.shields.io/npm/v/dsh-gemini-parameter.svg)](https://www.npmjs.com/package/dsh-gemini-parameter) [![downloads](https://img.shields.io/npm/dm/dsh-gemini-parameter.svg?label=downloads)](https://www.npmjs.com/package/dsh-gemini-parameter)
+
 给 DSH（DeepSeek Harness）用的宿主插件：**补上 DSH 原生 `google` 路由缺失的 Google 官方参数透传能力**。按需为每次 Gemini 请求（含流式）附加官方支持的请求字段：`safetySettings`、`X-Server-Timeout`，以及白名单内的 `serviceTier` / `cachedContent` / `maxOutputTokens`（长解码）/ `mediaResolution` 等。
 
 DSH 的原生 Google 适配器（pi-ai + `@google/genai`）只构造 `model / contents / config` 里的少量字段，很多官方参数没有设置入口。本插件在宿主进程里包装 `globalThis.fetch`，只对 `generativelanguage.googleapis.com` 上 `:generateContent` / `:streamGenerateContent` 的 JSON 请求做白名单式透传，其余流量一律原样放行；不修改 DSH / pi-ai / `@google/genai` 安装包。
@@ -38,12 +40,16 @@ DSH 的原生 Google 适配器（pi-ai + `@google/genai`）只构造 `model / co
 ## 3. 安装
 
 ```powershell
+# 推荐：npm 稳定版（自 0.1.1 起上架 npmjs.com）
+dsh plugin --profile <名称> add dsh-gemini-parameter
+
+# 备选：GitHub 源码安装
 dsh plugin --profile <名称> add github:FatBadger217/dsh-gemini-parameter
 ```
 
 新增包需要**重启 `dsh web`** 后在 GUI 中生效。插件落盘在 `~/.dsh/profiles/<名称>/node_modules/dsh-gemini-parameter\`（Windows 为 `<用户目录>\.dsh\profiles\<名称>\node_modules\dsh-gemini-parameter\`）。
 
-无论 GitHub 还是 npm 来源，安装与依赖解析均由 DSH 内置的 pnpm 自动完成，无需手动执行 npm/pnpm——本插件本身也是零运行时依赖。
+无论 GitHub 还是 npm 来源，安装与依赖解析均由 DSH 内置的 pnpm 自动完成，无需手动执行 npm/pnpm——本插件本身也是零运行时依赖。npm 来源为预构建稳定版（安装免构建授权），GitHub 来源跟随仓库最新提交。
 
 ## 4. 配置项（`cordis.patch.yml` 的 `config`）
 

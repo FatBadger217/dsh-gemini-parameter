@@ -1,4 +1,5 @@
 # dsh-gemini-parameter bundle patch.
+# `dsh plugin --profile <name> add dsh-gemini-parameter` (npm, recommended) or
 # `dsh plugin --profile <name> add github:FatBadger217/dsh-gemini-parameter`
 # (or plugin_manager install_bundle on this directory) appends this package to
 # dsh.profile.bundles and applies this layer, so the plugin mounts without any
